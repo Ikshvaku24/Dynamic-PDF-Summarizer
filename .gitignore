@@ -1,0 +1,12 @@
+artifacts/*
+*.ipynb
+*.docx
+*.csv
+*.pdf
+temp
+keyword_extraction.py
+sample.py
+summariser.py
+summarizer2.py
+temp.py
+text-extraction.py

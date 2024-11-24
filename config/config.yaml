@@ -1,0 +1,17 @@
+artifacts_root: artifacts
+
+data_ingestion:
+  root_dir: artifacts/data_ingestion
+  local_data_file: artifacts/data_ingestion/dataset
+  failed_data_file: artifacts/data_ingestion/failed
+
+data_processing:
+  pdf_folder_path: artifacts/data_ingestion/dataset
+
+model_config:
+  longformer_model_name: 'allenai/longformer-base-4096'
+  distilbart_model_name: 'sshleifer/distilbart-cnn-12-6'
+  sentence_model_name: 'paraphrase-MiniLM-L6-v2'
+  rerank_model_name: 'cross-encoder/ms-marco-MiniLM-L-6-v2'
+
+

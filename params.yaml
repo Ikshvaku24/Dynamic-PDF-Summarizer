@@ -1,0 +1,53 @@
+data_processing:
+  max_retries: 3
+  wait_time: 2
+  batch_size: 10  # For large PDF processing
+
+# General settings
+preprocessing:
+  correct_spelling: true  # Flag to enable/disable spelling correction
+
+text_processing:
+  remove_html: true            # Option to remove HTML
+  remove_urls: true            # Option to remove URLs
+  remove_emails: true          # Option to remove email addresses
+  handle_accents: true         # Option to normalize accented characters
+  remove_unicode_chars: true   # Option to remove non-ASCII characters
+  remove_punctuations: true    # Option to remove punctuation
+  remove_digits: false         # Option to remove digits
+  remove_extra_spaces: true    # Option to remove extra spaces
+  correct_spelling: true 
+  expand_contractions: true
+
+# Keyword extraction settings for YAKE
+keyword_extraction:
+  remove_newline: true
+  stop_words: true
+  language: "en"
+  max_ngram_size: 3
+  deduplication_threshold: 0.75
+  deduplication_algo: "seqm3"
+  window_size: 2
+
+# Rapidfuzz settings
+rapidfuzz:
+  threshold: 55  # Threshold for deduplication in Rapidfuzz
+
+
+
+# processing_config:
+#   max_input_length: 1024
+#   max_summary_length: 200
+#   min_summary_length: 50
+#   batch_size: 500
+#   dynamic_percentile: 20
+#   max_tokens: 4096
+
+# faiss_config:
+#   top_k: 10
+#   rerank_top_k: 5
+
+# dask_config:
+#   n_workers: 3
+#   threads_per_worker: 2
+#   memory_limit: '4GB'
