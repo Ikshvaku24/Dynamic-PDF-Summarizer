@@ -35,15 +35,17 @@ class TextProcessor:
             return np.array([])
 
     def semantic_chunking(self, 
-                         phrases: List[str], 
+                         phrases: str, 
                          model,
-                         client,
                          batch_size: int = 500, 
                          dynamic_percentile: int = 20,
                          max_tokens: int = 4096) -> Tuple[List[str], List[float], float]:
         """
         Perform semantic chunking on the input phrases.
         """
+        if isinstance(phrases, str):
+            logger.warning("Input is a single string, splitting into sentences.")
+            phrases = phrases.splitlines()
         if not phrases:
             logger.warning("No phrases found!")
             return [], [], 0.0
@@ -52,9 +54,14 @@ class TextProcessor:
 
         try:
             # Process batches
+            print("phrases-",len(phrases),type(phrases))
+            #here batches are created. batch contains lines it is a list not str
             batches = [phrases[i:i+batch_size] for i in range(0, len(phrases), batch_size)]
-            futures = client.map(lambda x: self.process_batch(x, model), batches)
-            encoded_phrases = client.gather(futures)
+            encoded_phrases = []
+            for batch in batches:
+                encoded_phrases.append(self.process_batch(batch, model))
+            
+            # Flatten the list of encoded phrases (assuming process_batch returns a 2D array)
             encoded_phrases = np.vstack([emb for emb in encoded_phrases if len(emb) > 0])
 
             if len(encoded_phrases) <= 1:
@@ -63,13 +70,15 @@ class TextProcessor:
 
             # Calculate similarity scores
             phrase_pairs = [(encoded_phrases[i-1], encoded_phrases[i]) 
-                           for i in range(1, len(encoded_phrases))]
-            similarity_futures = client.map(self.calculate_similarity_score, phrase_pairs)
-            similarity_scores = client.gather(similarity_futures)
+                            for i in range(1, len(encoded_phrases))]
+            similarity_scores = []
+            for pair in phrase_pairs:
+                similarity_scores.append(self.calculate_similarity_score(pair))
 
             # Count tokens
-            token_futures = client.map(self.count_tokens, phrases)
-            token_counts = client.gather(token_futures)
+            token_counts = []
+            for phrase in phrases:
+                token_counts.append(self.count_tokens(phrase))
 
             # Find threshold
             threshold = self.find_dynamic_threshold(similarity_scores, dynamic_percentile)

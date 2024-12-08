@@ -35,17 +35,22 @@ class TextProcessingPipeline:
 
             # Load data
             df = pd.read_csv('keywords.csv')
-            processed_text = df['processed_text'].values.tolist()
+            processed_text = df['processed_text'].values.tolist()[0]
             
+            print("\n\n\n")
+            print(processed_text,type(processed_text), len(processed_text))
+            print("\n\n\n")
             # Load models
             models = model_loader.load_models()
             
             # Process text and generate chunks
-            with Client(LocalCluster(n_workers=3, threads_per_worker=2,processes=True ,memory_limit='4GB')) as client:
-                logger.info("Processing document for chunking.")
-                chunks = text_processor.semantic_chunking(processed_text, models["sentence_model"], client)
+            # with Client(LocalCluster(n_workers=3, threads_per_worker=2,processes=True ,memory_limit='4GB')) as client:
+            logger.info("Processing document for chunking.")
+            chunks, similarity_scores, threshold = text_processor.semantic_chunking(phrases=processed_text,model= models["sentence_model"])
                 # client.cancel(client.who_has())
-
+            print("\n\n\nprinting chunks -----------------------------\n")
+            print(chunks,type(chunks), len(chunks))
+            print("\n\n\n")
             # Generate embeddings for chunks
             logger.info("Generating embeddings for document chunks.")
             chunked_embeddings = np.array([
@@ -57,8 +62,9 @@ class TextProcessingPipeline:
                 ) for chunk in chunks
             ])
 
-            return chunks, chunked_embeddings            
+            return chunks, chunked_embeddings, models            
         except Exception as e:
-            logger.error(f"An error occurred in the Text Summarization pipeline: {str(e)}")
+            logger.error(f"An error occurred in the Text Processing pipeline: {str(e)}")
+            print(e.__traceback__)
 
 

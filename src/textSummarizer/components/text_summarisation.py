@@ -2,13 +2,12 @@ import torch
 import numpy as np
 import faiss
 from typing import List, Dict, Any, Tuple
-import logging
 from src.textSummarizer.logging import logger
 from src.textSummarizer.components.text_processing import TextProcessor
 class TextSummarization:
     def __init__(self):
         # self.config = config
-        # self.logger = logger
+        # logger = logger
         pass
 
     def create_faiss_index(self, embeddings: np.ndarray) -> faiss.IndexFlatL2:
@@ -19,7 +18,7 @@ class TextSummarization:
             index.add(embeddings)
             return index
         except Exception as e:
-            self.logger.error(f"Error in creating FAISS index: {str(e)}")
+            logger.error(f"Error in creating FAISS index: {str(e)}")
             return None
         
     def retrieve_chunks(self, 
@@ -35,7 +34,7 @@ class TextSummarization:
             similar_chunks = [chunked_docs[i] for i in indices[0]]
             return similar_chunks
         except Exception as e:
-            self.logger.error(f"Error in chunk retrieval: {str(e)}")
+            logger.error(f"Error in chunk retrieval: {str(e)}")
             return []
 
     def rerank_passages(self, 
@@ -74,7 +73,7 @@ class TextSummarization:
 
             return ranked_passages, ranked_scores
         except Exception as e:
-            self.logger.error(f"Error in passage reranking: {str(e)}")
+            logger.error(f"Error in passage reranking: {str(e)}")
             return [], []
 
     def generate_summary(self, 
@@ -87,7 +86,7 @@ class TextSummarization:
         try:
             inputs = tokenizer(text, 
                              return_tensors='pt', 
-                             max_length=self.config.max_input_length, 
+                             max_length=1024, 
                              truncation=True)
             inputs = {k: v.to(model.device) for k, v in inputs.items()}
             
@@ -95,21 +94,20 @@ class TextSummarization:
                 inputs['input_ids'],
                 attention_mask=inputs['attention_mask'],
                 max_length=max_length,
-                min_length=min_length,
-                num_beams=self.config.num_beams,
-                length_penalty=self.config.length_penalty,
+                min_length=min(min_length,max_length//2),
+                num_beams=4,
+                length_penalty=2.0,
                 early_stopping=True,
-                no_repeat_ngram_size=self.config.no_repeat_ngram_size
+                no_repeat_ngram_size=3
             )
             
             return tokenizer.decode(summary_ids[0], skip_special_tokens=True)
         except Exception as e:
-            self.logger.error(f"Error in summary generation: {str(e)}")
+            logger.error(f"Error in summary generation: {str(e)}")
             return ""
 
     def full_rag_pipeline(self, 
                          query: str, 
-                         faiss_index: faiss.IndexFlat, 
                          chunked_embeddings: np.ndarray, 
                          chunked_docs: List[str], 
                          models: Dict, 
@@ -118,8 +116,9 @@ class TextSummarization:
         """Execute the full RAG pipeline."""
         try:
             
+            faiss_index = self.create_faiss_index(chunked_embeddings)
             # Get query embedding
-            query_embedding = self.get_embedding(
+            query_embedding = TextProcessor().get_embedding(
                 query, 
                 models["longformer_model"], 
                 models["longformer_tokenizer"], 
@@ -156,5 +155,5 @@ class TextSummarization:
 
             return final_summaries
         except Exception as e:
-            self.logger.error(f"Error in RAG pipeline: {str(e)}")
+            logger.error(f"Error in RAG pipeline: {str(e)}")
             return []

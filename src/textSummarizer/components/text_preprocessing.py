@@ -113,7 +113,7 @@ class TextPreProcessing:
         with ProgressBar():
             results = compute(*tasks, scheduler='processes')
         processed_text = []
-        
+        # results is a list of list
         for result in results:
             if "error" in result:
                 logger.error(f"Error processing text: {result['error']}")
