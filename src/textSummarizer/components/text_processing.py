@@ -3,11 +3,10 @@ import torch
 from typing import List, Tuple, Dict, Any
 import logging
 from src.textSummarizer.logging import logger
-from src.textSummarizer.components.model_loader import ModelLoader
+from src.textSummarizer.config.configuration import TextProcessingConfig
 class TextProcessor:
-    def __init__(self):
-        pass
-        # self.config = config
+    def __init__(self, config:TextProcessingConfig):
+        self.config = config
 
     def count_tokens(self, text: str) -> int:
         """Count the number of tokens in a text."""
@@ -18,10 +17,11 @@ class TextProcessor:
         emb1, emb2 = pair
         return float(np.dot(emb1, emb2) / (np.linalg.norm(emb1) * np.linalg.norm(emb2)))
 
-    def find_dynamic_threshold(self, similarity_scores: List[float], percentile: int = 20) -> float:
+    def find_dynamic_threshold(self, similarity_scores: List[float]) -> float:
         """Find dynamic threshold based on similarity score distribution."""
         if not similarity_scores:
             return 0.0
+        percentile = self.config.dynamic_percentile
         return float(np.percentile(similarity_scores, percentile))
 
     def process_batch(self, phrases: List[str], model) -> np.ndarray:
@@ -34,12 +34,13 @@ class TextProcessor:
             logger.error(f"Error in batch processing: {str(e)}")
             return np.array([])
 
+# Semantic chunking is a technique used in Natural Language Processing (NLP) to divide a larger piece of text into smaller, 
+# meaningful segments based on the semantic relationships between sentences or paragraphs.
+# This code checks the similarity score between the current phrase and the previous phrase. If the similarity is below the threshold, it creates a new chunk. 
+# This is not how semantic chunking is typically done.
     def semantic_chunking(self, 
                          phrases: str, 
-                         model,
-                         batch_size: int = 500, 
-                         dynamic_percentile: int = 20,
-                         max_tokens: int = 4096) -> Tuple[List[str], List[float], float]:
+                         model) -> Tuple[List[str], List[float], float]:
         """
         Perform semantic chunking on the input phrases.
         """
@@ -53,6 +54,8 @@ class TextProcessor:
         logger.info(f"Processing {len(phrases)} phrases")
 
         try:
+            batch_size = self.config.batch_size
+            max_tokens = self.config.max_tokens
             # Process batches
             print("phrases-",len(phrases),type(phrases))
             #here batches are created. batch contains lines it is a list not str
@@ -81,7 +84,7 @@ class TextProcessor:
                 token_counts.append(self.count_tokens(phrase))
 
             # Find threshold
-            threshold = self.find_dynamic_threshold(similarity_scores, dynamic_percentile)
+            threshold = self.find_dynamic_threshold(similarity_scores)
 
             # Create chunks
             chunks = []
@@ -114,14 +117,20 @@ class TextProcessor:
             logger.error(f"Error in semantic chunking: {str(e)}")
             return [], [], 0.0
 
-    def get_embedding(self, text: str, model, tokenizer, device) -> np.ndarray:
+    def get_embedding(self, text: str, model, tokenizer) -> np.ndarray:
         """Get embeddings for a text using the specified model."""
         try:
+            device = self.config.device
+            max_length = self.config.tokenizer_max_length
+            padding_strategy = self.config.padding
+            truncation = self.config.truncation
+
+            # Use the tokenizer with the configuration parameters
             inputs = tokenizer(text, 
-                             return_tensors="pt", 
-                             padding="max_length", 
-                             truncation=True, 
-                             max_length=4096)
+                            return_tensors="pt", 
+                            padding=padding_strategy,  # Padding strategy from config
+                            truncation=truncation,      # Truncation flag from config
+                            max_length=max_length)
             inputs = {key: value.to(device) for key, value in inputs.items()}
 
             with torch.no_grad():

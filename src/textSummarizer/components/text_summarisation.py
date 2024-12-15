@@ -3,12 +3,11 @@ import numpy as np
 import faiss
 from typing import List, Dict, Any, Tuple
 from src.textSummarizer.logging import logger
-from src.textSummarizer.components.text_processing import TextProcessor
+from src.textSummarizer.config.configuration import TextSummarizationConfig
 class TextSummarization:
-    def __init__(self):
-        # self.config = config
-        # logger = logger
-        pass
+    def __init__(self, config: TextSummarizationConfig):
+        self.config = config
+        
 
     def create_faiss_index(self, embeddings: np.ndarray) -> faiss.IndexFlatL2:
         
@@ -25,9 +24,10 @@ class TextSummarization:
                        query_embedding: np.ndarray, 
                        faiss_index: faiss.IndexFlat, 
                        chunked_docs: List[str], 
-                       top_k: int = 10) -> List[str]:
+                       ) -> List[str]:
         """Retrieve relevant chunks using FAISS."""
         try:
+            top_k = self.config.chunking_top_k
             query_embedding = np.array([query_embedding])
             faiss.normalize_L2(query_embedding)
             distances, indices = faiss_index.search(query_embedding, top_k)
@@ -42,10 +42,11 @@ class TextSummarization:
                        passages: List[str], 
                        rerank_model, 
                        device: str, 
-                       rerank_tokenizer, 
-                       top_k: int = 5) -> Tuple[List[str], List[float]]:
+                       rerank_tokenizer 
+                       ) -> Tuple[List[str], List[float]]:
         """Rerank passages using cross-encoder model."""
         try:
+            top_k = self.config.reranking.top_k
             scores = []
             for passage in passages:
                 inputs = rerank_tokenizer(
@@ -79,11 +80,12 @@ class TextSummarization:
     def generate_summary(self, 
                         text: str, 
                         model, 
-                        tokenizer, 
-                        max_length: int = 200, 
-                        min_length: int = 50) -> str:
+                        tokenizer 
+                        ) -> str:
         """Generate summary using the specified model."""
         try:
+            max_length = self.config.summarization.max_length
+            min_length = self.config.summarization.min_length
             inputs = tokenizer(text, 
                              return_tensors='pt', 
                              max_length=1024, 
@@ -109,46 +111,39 @@ class TextSummarization:
     def full_rag_pipeline(self, 
                          query: str, 
                          chunked_embeddings: np.ndarray, 
-                         chunked_docs: List[str], 
-                         models: Dict, 
-                         device: str, 
-                         top_k: int = 5) -> List[str]:
+                         chunked_docs: List[str],
+                         query_embedding: np.ndarray, 
+                         models: Dict 
+                         ) -> List[str]:
         """Execute the full RAG pipeline."""
         try:
+            device = self.config.device
             
             faiss_index = self.create_faiss_index(chunked_embeddings)
-            # Get query embedding
-            query_embedding = TextProcessor().get_embedding(
-                query, 
-                models["longformer_model"], 
-                models["longformer_tokenizer"], 
-                device
-            )
+            
 
             # Retrieve similar chunks
             similar_chunks = self.retrieve_chunks(
                 query_embedding, 
                 faiss_index, 
-                chunked_docs, 
-                top_k
+                chunked_docs 
             )
 
             # Rerank chunks
             reranked_chunks, _ = self.rerank_passages(
-                query, 
-                similar_chunks, 
-                models["rerank_model"], 
-                device,
-                models["rerank_tokenizer"], 
-                top_k
+                query=query, 
+                passages=similar_chunks, 
+                rerank_model=models[self.config.reranking.rerank_model], 
+                rerank_tokenizer=models[self.config.reranking.rerank_tokenizer],
+                device=device
             )
 
             # Generate summaries
             final_summaries = [
                 self.generate_summary(
                     chunk, 
-                    models["distilbart_model"], 
-                    models["distilbart_tokenizer"]
+                    models[self.config.summarization.summarization_model], 
+                    models[self.config.summarization.summarization_tokenizer]
                 ) 
                 for chunk in reranked_chunks
             ]

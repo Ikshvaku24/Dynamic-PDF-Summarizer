@@ -40,6 +40,16 @@ The goal is to design a robust system that:
 ---
 
 ## **Workflows**  
+
+ -  Update config.yaml
+ -  Update params.yaml
+ -  Update entity
+ -  Update the configuration manager in src config
+ -  update the conponents
+ -  update the pipeline
+ -  update the main.py
+ -  update the app.py
+
 The pipeline consists of the following stages:  
 
 1. **Data Ingestion**  
@@ -68,6 +78,71 @@ The pipeline consists of the following stages:
 ---
 
 
+## **Project Structure**
+textSummarizer
+
+      ├── init.py
+      ├── components
+      │   ├── data_ingestion.py
+      │   ├── keyword_extraction.py
+      │   ├── pdf_extraction.py
+      │   ├── pdf_processing.py
+      │   ├── text_processing.py
+      │   ├── model_loader.py
+      │   ├── query_generation.py
+      │   ├── text_preprocessing.py
+      │   ├── text_summarisation.py
+      │   ├── init.py
+      │   └── pycache
+      │           ├── data_ingestion.cpython-311.pyc
+      │           ├── keyword_extraction.cpython-311.pyc
+      │           ├── pdf_extraction.cpython-311.pyc
+      │           ├── pdf_processing.cpython-311.pyc
+      │           ├── text_processing.cpython-311.pyc
+      │           └── init.cpython-311.pyc
+      ├── config
+      │   ├── configuration.py
+      │   ├── init.py
+      │   └── pycache
+      │           ├── configuration.cpython-311.pyc
+      │           └── init.cpython-311.pyc
+      ├── constants
+      │   ├── init.py
+      │   └── pycache
+      │           └── init.cpython-311.pyc
+      ├── entity
+      │   ├── init.py
+      │   └── pycache
+      │           └── init.cpython-311.pyc
+      ├── logging
+      │   ├── init.py
+      │   └── pycache
+      │           ├── init.cpython-311.pyc
+      │           └── init.cpython-311.pyc
+      ├── pipeline
+      │   ├── stage_01_data_ingestion.py
+      │   ├── stage_02_pdf_processing.py
+      │   ├── stage_03_text_preprocessing.py
+      │   ├── stage_04_keyword_extraction.py
+      │   ├── stage_05_text_processing.py
+      │   ├── stage_06_summarization.py
+      │   ├── init.py
+      │   └── pycache
+      │           ├── stage_01_data_ingestion.cpython-311.pyc
+      │           ├── stage_02_data_processing.cpython-311.pyc
+      │           ├── stage_03_text_processing.cpython-311.pyc
+      │           ├── stage_04_keyword_extraction.cpython-311.pyc
+      │           └── init.cpython-311.pyc
+      ├── utils
+      │   ├── common.py
+      │   ├── retry.py
+      │   ├── init.py
+      │   └── pycache
+      │           ├── common.cpython-311.pyc
+      │           ├── retry.cpython-311.pyc
+      │           └── init.cpython-311.pyc
+      └── pycache__
+            └── init.cpython-311.pyc
 ---
 
 ## **Setup Instructions**

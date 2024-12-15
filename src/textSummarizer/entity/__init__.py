@@ -52,10 +52,42 @@ class ModelConfig:
     rerank_model_name: str
 
 @dataclass
-class ProcessingConfig:
-    max_input_length: int
-    max_summary_length: int
-    min_summary_length: int
+class TextProcessingConfig:
     batch_size: int
     dynamic_percentile: int
     max_tokens: int
+    embedding_model_name: str
+    embedding_tokenizer: str
+    sentence_model: str
+    tokenizer_max_length: int
+    device: str
+    padding: str
+    truncation: bool
+
+@dataclass
+class QueryGenerationConfig:
+    most_common_words_count: int  
+    num_topics: int 
+    
+@dataclass
+class RerankingConfig:
+    top_k: int
+    rerank_model: str
+    rerank_tokenizer: str
+
+@dataclass
+class SummarizationConfig:
+    summarization_model: str
+    summarization_tokenizer: str
+    max_length: int
+    min_length: int
+    tokenizer_max_length: int
+
+@dataclass
+class TextSummarizationConfig:
+    device: str
+    chunking_top_k: int
+    summarization: SummarizationConfig
+    reranking: RerankingConfig 
+
+         

@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 import torch
 from src.textSummarizer.components.query_generation import QueryGeneration
+from src.textSummarizer.components.text_processing import TextProcessor
+
 class TextSummarizationPipeline:
     def __init__(self):
         self.config_manager = ConfigurationManager()
@@ -19,18 +21,26 @@ class TextSummarizationPipeline:
         
         try:
             df = pd.read_csv('keywords.csv')
-            keywords = df['keywords'].values.tolist()
+            keywords = df['keywords'].values.tolist()[0].split(", ")
+            query_generation_config= self.config_manager.get_query_generation_config()
+            query_generator = QueryGeneration(query_generation_config)
+            query = query_generator.generate_domain_specific_query(chunks=chunks,keywords=keywords, models=models)
+            text_processing_config = self.config_manager.get_text_processing_config()
+
+            query_embedding = TextProcessor(text_processing_config).get_embedding(
+                query, 
+                models[text_processing_config.embedding_model_name],
+                models[text_processing_config.embedding_tokenizer]
+            )
             
-            query_generator = QueryGeneration()
-            query = query_generator.generate_domain_specific_query(chunks=chunks,keywords=keywords)
             # Initialize components
-            summarizer = TextSummarization()
-            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            text_summarization_config= self.config_manager.get_text_summarization_config()
+            summarizer = TextSummarization(text_summarization_config)
            
             
             #TODO start from here --,standardise ,model cache, parallel processing
             # Create FAISS index
-            return summarizer.full_rag_pipeline(query=query, chunked_embeddings=chunked_embeddings, chunked_docs=chunks, models=models, device=device)
+            return summarizer.full_rag_pipeline(query=query, chunked_embeddings=chunked_embeddings, chunked_docs=chunks,query_embedding=query_embedding, models=models)
            
         except Exception as e:
             logger.error(f"Error in RAG pipeline execution: {str(e)}")

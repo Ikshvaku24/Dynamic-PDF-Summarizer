@@ -4,9 +4,13 @@ from src.textSummarizer.pipeline.stage_03_text_preprocessing import TextPreProce
 from src.textSummarizer.pipeline.stage_04_keyword_extraction import KeywordExtractionPipeline
 from src.textSummarizer.pipeline.stage_05_text_processing import TextProcessingPipeline
 from src.textSummarizer.pipeline.stage_06_summarization import TextSummarizationPipeline
+from src.textSummarizer.components.model_loader import ModelLoader
+from src.textSummarizer.config.configuration import ConfigurationManager
 
 from src.textSummarizer.logging import logger
 from typing import List, Tuple
+
+
 
 def run_data_ingestion_stage():
     STAGE_NAME = "Data Ingestion Stage"
@@ -66,15 +70,15 @@ def run_keyword_extraction_stage():
         raise e
     
 # Stage 5: Text Processing    
-def run_text_processing_stage():
+def run_text_processing_stage(models):
     STAGE_NAME = "Text Processing Stage"
     try:
         logger.info(f">>>>>>> stage {STAGE_NAME} started <<<<<<<<<")
         text_processing = TextProcessingPipeline()
-        chunks, chunked_embeddings, models = text_processing.main()
+        chunks, chunked_embeddings = text_processing.main(models)
         logger.info(f">>>>>>> stage {STAGE_NAME} completed <<<<<<<<<")
         # logger.info(f"Generated chunks: {chunks}")
-        return chunks, chunked_embeddings, models
+        return chunks, chunked_embeddings
 
     except Exception as e:
         logger.error(e)
@@ -96,11 +100,16 @@ def run_text_summarization_stage(chunks, chunked_embeddings, models):
 
 
 if __name__ == "__main__":
+    config_manager = ConfigurationManager()
+    model_config = config_manager.get_model_config()
+    model_loader = ModelLoader(model_config)
+    models = model_loader.load_models()
+    
     
     # Uncomment the stages to run them in sequence or as needed
-    # run_data_ingestion_stage()
+    run_data_ingestion_stage()
     processed_data = run_data_processing_stage() #category, page_count, text 
     run_text_preprocessing_stage(processed_data)
     run_keyword_extraction_stage()
-    chunks, chunked_embeddings, models = run_text_processing_stage()
+    chunks, chunked_embeddings= run_text_processing_stage(models)
     run_text_summarization_stage(chunks=chunks,chunked_embeddings=chunked_embeddings,models=models)

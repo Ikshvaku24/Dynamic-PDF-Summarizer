@@ -37,6 +37,7 @@ class DataIngestion:
         
         # Download multiple files concurrently
         results = download_files_in_parallel(urls=self.config.urls, local_dir=self.config.local_data_file, failed_dir=self.config.failed_data_file)
+        
         import pandas as pd
         pd.DataFrame(results).to_csv('metadata.csv',index=False)
 
